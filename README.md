@@ -8,7 +8,7 @@ This is a fork of **[DiVA.wgs](https://github.com/solida-core/diva.wgs)** (DNA V
 ## Running DiVA.wgs
  * Clone the repository from git-hub:
 ```bash
-git clone --recursive https://github.com/igg-bioinfo/diva.wgs.git
+git clone https://github.com/igg-bioinfo/diva.wgs.git
 ```
 
  * Rename the folder, from `diva.wgs` to your PROJECT_NAME:
