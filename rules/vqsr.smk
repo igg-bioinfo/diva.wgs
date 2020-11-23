@@ -10,6 +10,7 @@ rule concatVcfs:
         "../envs/bcftools.yaml"
     benchmark:
         "benchmarks/bcftools/concat/all.txt"
+    threads: config.get("rules").get("concatVcfs").get("threads")
     shell:
          "bcftools concat -a {input.vcfs} | bgzip -cf > {output};"
          "tabix -p vcf {output}"
@@ -20,18 +21,18 @@ def _get_recal_params(wildcards):
         return (
             "--mode SNP "
             "-an DP -an QD -an MQ -an MQRankSum -an ReadPosRankSum -an FS -an SOR "
-            "--resource hapmap,known=false,training=true,truth=true,prior=15.0:{hapmap} "
-            "--resource omni,known=false,training=true,truth=true,prior=12.0:{omni} "
-            "--resource 1000G,known=false,training=true,truth=false,prior=10.0:{g1k} "
-            "--resource dbsnp,known=true,training=false,truth=false,prior=2.0:{dbsnp} "
+            "--resource:hapmap,known=false,training=true,truth=true,prior=15.0 {hapmap} "
+            "--resource:omni,known=false,training=true,truth=true,prior=12.0 {omni} "
+            "--resource:1000G,known=false,training=true,truth=false,prior=10.0 {g1k} "
+            "--resource:dbsnp,known=true,training=false,truth=false,prior=2.0 {dbsnp} "
         ).format(**known_variants)
     else:
         return (
             "-mode INDEL "
             "-an DP -an QD -an FS -an SOR -an MQRankSum -an ReadPosRankSum "
             "--max-gaussians 4 "
-            "--resource dbsnp,known=true,training=false,truth=false,prior=2.0:{dbsnp} "
-            "--resource mills,known=false,training=true,truth=true,prior=12.0:{mills} "
+            "--resource:dbsnp,known=true,training=false,truth=false,prior=2.0 {dbsnp} "
+            "--resource:mills,known=false,training=true,truth=true,prior=12.0 {mills} "
         ).format(**known_variants)
 
 
@@ -53,6 +54,7 @@ rule gatk_VariantRecalibrator:
         "logs/gatk/VariantRecalibrator/{prefix}.{type}_recalibrate_info.log"
     benchmark:
         "benchmarks/gatk/VariantRecalibrator/{prefix}.{type}_recalibrate_info.txt"
+    threads: conservative_cpu_count(reserve_cores=2, max_cores=config.get("rules").get("gatk_VariantRecalibrator").get("threads"))
     shell:
         "gatk VariantRecalibrator --java-options {params.custom} "
         "-R {params.genome} "
@@ -82,6 +84,7 @@ rule gatk_ApplyVQSR:
         "logs/gatk/ApplyVQSR/{prefix}.{type}_recalibrate.log"
     benchmark:
         "benchmarks/gatk/ApplyVQSR/{prefix}.{type}_recalibrate.txt"
+    threads: conservative_cpu_count(reserve_cores=2, max_cores=config.get("rules").get("gatk_ApplyVQSR").get("threads"))
     shell:
         "gatk  ApplyVQSR --java-options {params.custom} "
         "-R {params.genome} "

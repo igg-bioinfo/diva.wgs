@@ -13,6 +13,7 @@ rule picard_InsertSizeMetrics:
        "benchmarks/picard/IsMetrics/{sample}.txt"
    log:
        "logs/picard/IsMetrics/{sample}.log"
+   threads: config.get("rules").get("picard_InsertSizeMetrics").get("threads")
    shell:
        "picard {params.custom} CollectInsertSizeMetrics "
        "I={input.bam} "
@@ -35,6 +36,7 @@ rule picard_WGSMetrics:
        "benchmarks/picard/WGSMetrics/{sample}.txt"
    log:
        "logs/picard/WGSMetrics/{sample}.log"
+   threads: config.get("rules").get("picard_WGSMetrics").get("threads")
    shell:
        "picard {params.custom} CollectWgsMetrics "
        "{params.arguments} "

@@ -2,50 +2,63 @@
 [![snakemake](https://img.shields.io/badge/snakemake-5.3-brightgreen.svg)](https://snakemake.readthedocs.io/en/stable/)
 
 # DiVA WGS
-**DiVA WGS** is a pipeline for Next-Generation Sequencing **Whole Genome** data anlysis.
-
-All **[solida-core](https://github.com/solida-core)** workflows follow GATK Best Practices for Germline Variant Discovery, with the incorporation of further improvements and refinements after their testing with real data in various [CRS4 Next Generation Sequencing Core Facility](http://next.crs4.it) research sequencing projects.
-
-Pipelines are based on [Snakemake](https://snakemake.readthedocs.io/en/stable/), a workflow management system that provides all the features needed to create reproducible and scalable data analyses.
-
-Software dependencies are specified into the `environment.yaml` file and directly managed by Snakemake using [Conda](https://docs.conda.io/en/latest/miniconda.html), ensuring the reproducibility of the workflow on a great number of different computing environments such as workstations, clusters and cloud environments.
+This is a fork of **[DiVA.wgs](https://github.com/solida-core/diva.wgs)** (DNA Variant Analysis of WGS), a [Snakemake](https://snakemake.readthedocs.io/en/stable/)-based pipeline for Next-Generation Sequencing **Whole-Genome** data analysis, developed at [CRS4 Next Generation Sequencing Core Facility](http://next.crs4.it). Software dependencies are directly managed by Snakemake using [Conda](https://docs.conda.io/en/latest/miniconda.html), ensuring the reproducibility of the workflow according to [FAIR](https://www.go-fair.org/fair-principles/) principles.
 
 
-### Pipeline Overview
-The pipeline workflow is composed by two major analysis sections:
- * [_Mapping_](docs/diva_workflow.md#mapping): single and/or paired-end reads in fastq format are aligned against a reference genome to produce a deduplicated and recalibrated BAM file. This section is executed by DiMA pipeline.
+## Running DiVA.wgs
+ * Clone the repository from git-hub:
+```bash
+git clone --recursive https://github.com/igg-bioinfo/diva.wgs.git
+```
 
- * [_Variant Calling_](docs/diva_workflow.md#variant-calling): a joint call is performed from all project's bam files
- 
-Parallely, statistics collected during these steps are used to generate reports for [Quality Control](docs/diva_workflow.md#quality-control).
+ * Rename the folder, from `diva.wgs` to your PROJECT_NAME:
+```bash
+mv diva.wgs PROJECT_NAME
+```
 
-A complete view of the analysis workflow is provided by the pipeline's [graph](images/diva-wgs.png).
+ * cd into the newly created folder:
+```bash
+cd PROJECT_NAME
+```
 
+ * Edit the configuration files in **conf** subfolder:
+   * config.yaml - paths to your reference files: genome, target regions, etc.
+   * samples.tsv - associate samples to FASTQ files
+   * samples.ped - pedigree file in [ped](https://gatk.broadinstitute.org/hc/en-us/articles/360035531972-PED-Pedigree-format) format
+   * units.tsv - paths to FASTQ files
 
+ * Edit the **Snakefile** and uncomment the output files you need
 
-### Pipeline Handbook
-**DiVA WGS** pipeline documentation can be found in the `docs/` directory:
+ * If conda package manager is not available, install [miniconda](https://docs.conda.io/en/latest/miniconda.html).
 
+ * Create a virtual environment containing snakemake, as suggested [here](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html). First install mamba as a replacement of the default conda solver:
+```bash
+conda install -c conda-forge mamba
+```
 
-1. [Pipeline Structure:](https://github.com/solida-core/docs/blob/master/pages/handbook/pipeline_struct.md)
-    * [Snakefile](https://github.com/solida-core/docs/blob/master/pages/handbook/pipeline_struct.md#snakefile)
-    * [Configfile](https://github.com/solida-core/docs/blob/master/pages/handbook/pipeline_struct.md#configfile)
-    * [Rules](https://github.com/solida-core/docs/blob/master/pages/handbook/pipeline_struct.md#rules)
-    * [Envs](https://github.com/solida-core/docs/blob/master/pages/handbook/pipeline_struct.md#envs)
-2. [Pipeline Workflow](docs/diva_workflow.md)
-3. Required Files:
-    * [Reference files](docs/reference_files.md)
-    * [User files](docs/user_files.md)
-4. Running the pipeline:
-    * [Manual Snakemake Usage](docs/diva_snakemake.md)
-    * SOLIDA:
-        * [CLI - Command Line Interface](https://github.com/solida-core/docs/blob/master/pages/solida/solida_cli.md)
-        * [GUI - Graphical User Interface](https://github.com/solida-core/docs/blob/master/pages/solida/solida_gui.md)
+ * Then, install snakemake:
+```bash
+mamba env create --name snakemake --file environment.yaml
+```
 
+ * Activate the enviroment:
+```bash
+conda activate snakemake
+```
 
+ * Run snakemake in dry-run mode to check if everything is fine. **YOUR_WORKING_DIR** could follow the format: **YYYY-MM-DD**.
+```bash
+snakemake --cores 32 --use-conda --configfile conf/config.yaml --printshellcmds -d YOUR_WORKING_DIR --rerun-incomplete --keep-going --dryrun
+```
 
+ * For verbose output:
+```bash
+snakemake --cores 32 --use-conda --configfile conf/config.yaml --printshellcmds -d YOUR_WORKING_DIR --rerun-incomplete --keep-going --verbose --reason --dryrun
+```
 
+ * If you are happy with the --dryrun, run snakemake:
+```bash
+snakemake --cores 32 --use-conda --configfile conf/config.yaml --printshellcmds -d YOUR_WORKING_DIR --rerun-incomplete --keep-going
+```
 
-
-### Contact us
-[support@solida-core](mailto:m.massidda@crs4.it) 
+**Tip:** For large projects, we suggest to run snakemake in a [screen](https://linux.die.net/man/1/screen) session.

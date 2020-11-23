@@ -3,55 +3,52 @@ from snakemake.utils import validate, min_version
 ##### set minimum snakemake version #####
 min_version("5.10.0")
 
-##### load config and sample sheets #####
-
-configfile: "config.yaml"
-
+## User files ##
 samples = pd.read_table(config["samples"], index_col="sample")
 units = pd.read_table(config["units"], index_col=["unit"], dtype=str)
 reheader = pd.read_csv(config["reheader"],index_col="Client", dtype=str, sep="\t")
 reheader = reheader[reheader["LIMS"].isin(samples.index.values)]
 
+## Local rules ##
+# When using snakemake profiles to run the pipeline on a computer cluster,
+# the following rules will be executed locally instead of being submitted
+# by the job scheduler 
+localrules: all, pre_rename_fastq_pe, post_rename_fastq_pe, pre_rename_fastq_se, post_rename_fastq_se, concatVcfs
 
-##### local rules #####
-
-localrules: all, pre_rename_fastq_pe, post_rename_fastq_pe, concatVcfs
-
-
-##### target rules #####
-
+## Target files ##
 rule all:
     input:
+        "split/splitted",
         "qc/multiqc.html",
-        expand("reads/merged/{sample.sample}.cram.crai",
+        # Final CRAM
+        expand("reads/recalibrated/{sample.sample}.dedup.recal.cram",
               sample=samples.reset_index().itertuples()),
+        # VCF before recalibration, for each interval
         expand("variant_calling/all.{interval}.vcf.gz",
                 interval=[str(i).zfill(4) for i in
                         range(0, int(config.get('rules').get
                         ('gatk_SplitIntervals').get('scatter-count')))]),
+        # VCF before recalibration
         "variant_calling/all.vcf.gz",
-        "variant_calling/all.snp_recalibrated.indel_recalibrated.vcf.gz",
-        "delivery.completed"
+        # VCF after recalibration
+        "variant_calling/all.snp_recalibrated.indel_recalibrated.vcf.gz"
 
-
-##### load rules #####
-
+## Load rules ##
 include_prefix="rules"
-dima_path="dima/"
 include:
     include_prefix + "/functions.py"
 include:
-    dima_path + include_prefix + "/trimming.smk"
+    include_prefix + "/trimming.smk"
 include:
-    dima_path + include_prefix + "/alignment.smk"
+    include_prefix + "/alignment.smk"
 include:
-    dima_path + include_prefix + "/samtools.smk"
+    include_prefix + "/samtools.smk"
 include:
-    dima_path + include_prefix + "/picard.smk"
+    include_prefix + "/picard.smk"
 include:
-    dima_path + include_prefix + "/bsqr.smk"
+    include_prefix + "/bsqr.smk"
 include:
-       include_prefix + "/picard_stats.smk"
+    include_prefix + "/picard_stats.smk"
 include:
     include_prefix + "/call_variants.smk"
 include:
@@ -60,5 +57,3 @@ include:
     include_prefix + "/qc.smk"
 include:
     include_prefix + "/vqsr.smk"
-include:
-    include_prefix + "/delivery.smk"

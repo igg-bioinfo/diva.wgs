@@ -1,0 +1,83 @@
+samples: ../conf/samples.tsv
+units: ../conf/units.tsv
+reheader: ../conf/reheader.tsv
+
+references:
+    basepath: "/mnt/references"
+    provider: "gatk"
+    genome_release: "hg38"
+
+genome_fasta: "Homo_sapiens_assembly38.fasta"
+
+known_variants:
+    dbsnp: "Homo_sapiens_assembly38.dbsnp138.vcf"
+    hapmap: "hapmap_3.3.hg38.vcf.gz"
+    g1k: "1000G_phase1.snps.high_confidence.hg38.vcf.gz"
+    omni: "1000G_omni2.5.hg38.vcf.gz"
+    mills: "Mills_and_1000G_gold_standard.indels.hg38.vcf.gz"
+    #ph1_indels: "known_variants/1000G_phase1.indels.hg19.sites.vcf"
+    ph1_indels: "Homo_sapiens_assembly38.known_indels.vcf.gz"
+
+
+tmp_dir: "/mnt/tmp"
+
+rules:
+    bwa_mem:
+        arguments: "-M"
+        platform: "illumina"
+        threads: 6
+    multiqc:
+        arguments: "--force --interactive "
+        threads: 12
+    trim_galore_pe:
+        arguments: "-q 20 --fastqc --fastqc_args '--outdir qc/fastqc --quiet' --paired"
+        threads: 8
+    trim_galore_se:
+        arguments: "-q 20 --fastqc --fastqc_args '--outdir qc/fastqc --quiet'"
+        threads: 8
+    picard_MarkDuplicates:
+        arguments: "REMOVE_DUPLICATES=false ASSUME_SORTED=true CREATE_INDEX=true"
+        threads: 6
+    picard_InsertSizeMetrics:
+        threads: 2
+    picard_WGSMetrics:
+        arguments: "MINIMUM_MAPPING_QUALITY=-1 MINIMUM_BASE_QUALITY=-1 READ_LENGTH=150 COUNT_UNPAIRED=true"
+        threads: 6
+    gatk_SplitIntervals:
+        scatter-count: 25
+        mode: BALANCING_WITHOUT_INTERVAL_SUBDIVISION_WITH_OVERFLOW
+        intervals: "/mnt/references/gatk/hg38/wgs_calling_regions.hg38.interval_list"
+        threads: 2
+    gatk_BQSR_data_processing:
+        known_sites:
+            - dbsnp
+            - mills
+            - ph1_indel
+        threads: 12
+    gatk_ApplyBQSR:
+        threads: 6
+    gatk_BQSR_quality_control:
+        threads: 6
+    gatk_HaplotypeCaller_ERC_GVCF:
+        threads: 2
+    gatk_GenomicsDBImport:
+        db_suffix: "db_gatk"
+        threads: 20
+    gatk_GenotypeGVCFs:
+        threads: 20
+    gatk_VariantRecalibrator:
+        threads: 20
+    gatk_ApplyVQSR:
+        threads: 20
+    concatVcfs:
+        threads: 4
+    samtools_sort:
+        threads: 6
+    samtools_merge:
+        threads: 6
+    samtools_cram_to_bam:
+        threads: 6
+    samtools_bam_to_cram:
+        threads: 6
+    samtools_index:
+        threads: 1

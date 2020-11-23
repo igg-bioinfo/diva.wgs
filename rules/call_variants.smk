@@ -13,6 +13,7 @@ rule gatk_SplitIntervals:
         "logs/gatk/SplitIntervals/split.log"
     benchmark:
         "benchmarks/gatk/SplitIntervals/split.txt"
+    threads: config.get("rules").get("gatk_SplitIntervals").get("threads")
     shell:
         "gatk SplitIntervals --java-options {params.custom} "
         "-R {params.genome} "
@@ -25,8 +26,8 @@ rule gatk_SplitIntervals:
 rule gatk_HaplotypeCaller_ERC_GVCF:
     input:
         'split/splitted',
-        bam="reads/recalibrated/{sample}.dedup.recal.bam"
-
+        cram="reads/recalibrated/{sample}.dedup.recal.cram",
+        crai="reads/recalibrated/{sample}.dedup.recal.cram.crai"
     output:
         gvcf="variant_calling/{sample}.{interval}.g.vcf.gz"
     conda:
@@ -38,10 +39,11 @@ rule gatk_HaplotypeCaller_ERC_GVCF:
         "logs/gatk/HaplotypeCaller/{sample}.{interval}.genotype_info.log"
     benchmark:
         "benchmarks/gatk/HaplotypeCaller/{sample}.{interval}.txt"
+    threads: config.get("rules").get("gatk_HaplotypeCaller_ERC_GVCF").get("threads")
     shell:
         "gatk HaplotypeCaller --java-options {params.custom} "
         "-R {params.genome} "
-        "-I {input.bam} "
+        "-I {input.cram} "
         "-O {output.gvcf} "
         "-ERC GVCF "
         "-G StandardAnnotation "

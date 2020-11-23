@@ -21,6 +21,7 @@ rule multiqc:
         "../envs/multiqc.yaml"
     log:
         "logs/multiqc/multiqc.log"
+    threads: config.get("rules").get("multiqc").get("threads")
     shell:
         "multiqc "
         "{input} "
