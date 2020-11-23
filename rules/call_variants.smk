@@ -6,7 +6,7 @@ rule gatk_SplitIntervals:
     params:
         custom=java_params(tmp_dir=config.get("tmp_dir"), multiply_by=1),
         genome=resolve_single_filepath(*references_abs_path(), config.get("genome_fasta")),
-        count=config.get("rules").get("gatk_SplitIntervals").get("scatter-count"),
+        scatter_count=config.get("rules").get("gatk_SplitIntervals").get("scatter-count"),
         mode=config.get("rules").get("gatk_SplitIntervals").get("mode"),
         intervals=config.get("rules").get("gatk_SplitIntervals").get("intervals")
     log:
@@ -19,7 +19,7 @@ rule gatk_SplitIntervals:
         "-R {params.genome} "
         "-L {params.intervals} "
         "-mode {params.mode} "
-        "--scatter-count {params.count} "
+        "--scatter-count {params.scatter_count} "
         "-O split "
         ">& {log} "
 
