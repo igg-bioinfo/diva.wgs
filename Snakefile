@@ -8,6 +8,7 @@ samples = pd.read_table(config["samples"], index_col="sample")
 units = pd.read_table(config["units"], index_col=["unit"], dtype=str)
 reheader = pd.read_csv(config["reheader"],index_col="Client", dtype=str, sep="\t")
 reheader = reheader[reheader["LIMS"].isin(samples.index.values)]
+sets = pd.read_csv(config["sets"], index_col=["set"], dtype=str, sep="\t")
 
 ## Local rules ##
 # When using snakemake profiles to run the pipeline on a computer cluster,
@@ -31,7 +32,11 @@ rule all:
         # VCF before recalibration
         "variant_calling/all.vcf.gz",
         # VCF after recalibration
-        "variant_calling/all.snp_recalibrated.indel_recalibrated.vcf.gz"
+        "variant_calling/all.snp_recalibrated.indel_recalibrated.vcf.gz",
+        # Manta
+        expand("variant_calling/sv/{set.set}/{set.set}.diploidSV.vcf.gz",set=sets.reset_index().itertuples()),
+        # MantaINV
+        expand("variant_calling/sv/{set.set}/{set.set}.diploidSV_INV.vcf.gz",set=sets.reset_index().itertuples()),
 
 ## Load rules ##
 include_prefix="rules"
@@ -57,3 +62,5 @@ include:
     include_prefix + "/qc.smk"
 include:
     include_prefix + "/vqsr.smk"
+include:
+    include_prefix + "/manta.smk"

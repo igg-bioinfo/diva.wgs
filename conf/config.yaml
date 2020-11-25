@@ -1,6 +1,7 @@
 samples: ../conf/samples.tsv
 units: ../conf/units.tsv
 reheader: ../conf/reheader.tsv
+sets: ../conf/sets.tsv
 
 references:
     basepath: "/mnt/references"
@@ -81,3 +82,7 @@ rules:
         threads: 6
     samtools_index:
         threads: 1
+    manta:
+        threads: 30
+    mantaINV:
+        threads: 2

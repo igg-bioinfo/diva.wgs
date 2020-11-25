@@ -134,3 +134,16 @@ def get_units_by_sample(wildcards, samples, label='units', prefix='before',
                                                   [label]][0].split(',')]
 def get_odp(wildcards,samples,optical_dup='odp'):
     return "OPTICAL_DUPLICATE_PIXEL_DISTANCE={}".format(samples.loc[wildcards.sample, [optical_dup]].dropna()[0])
+
+def get_bams_by_set(wildcards, sets, target, label='sample'):
+    for sample_set in sets.loc[wildcards.set,[label]]:
+        sample_args=''
+        for x in sample_set.split(','):
+            sample_args= sample_args+' --bam reads/recalibrated/'+x+'.dedup.recal.cram'
+
+        if target == 'shell':
+            return str(sample_args)
+        else:
+            crams = tuple(map(str, str(sample_args).split(' --bam ')))
+            crams = tuple([t for t in crams if t])
+            return crams
