@@ -35,7 +35,8 @@ def references_abs_path():
     references = config.get('references')
     basepath = references['basepath']
     provider = references['provider']
-    genome = references['genome_release']
+    genome = references['release']
+
 
     return [os.path.join(basepath, provider, genome)]
 

@@ -4,11 +4,13 @@ reheader: ../conf/reheader.tsv
 sets: ../conf/sets.tsv
 
 references:
-    basepath: "/mnt/references"
+    basepath: "/home/datasets_references"
     provider: "gatk"
-    genome_release: "hg38"
+    release: "Hg38"
 
 genome_fasta: "Homo_sapiens_assembly38.fasta"
+depthofcov_intervals: "intervals/ucsc.hg38.refSeqCurated.cdsOnly.bed"
+depthofcov_refseq: "intervals/CCDS_UCSC_Hg38.Select.refseq"
 
 known_variants:
     dbsnp: "Homo_sapiens_assembly38.dbsnp138.vcf"
@@ -20,22 +22,24 @@ known_variants:
     ph1_indels: "Homo_sapiens_assembly38.known_indels.vcf.gz"
 
 
-tmp_dir: "/mnt/tmp"
+tmp_dir: "/scratch"
 
 rules:
     bwa_mem:
         arguments: "-M"
         platform: "illumina"
-        threads: 6
+        threads: 24
     multiqc:
         arguments: "--force --interactive "
         threads: 12
+    multiqc_heatmap:
+        threads: 4
     trim_galore_pe:
         arguments: "-q 20 --fastqc --fastqc_args '--outdir qc/fastqc --quiet' --paired"
-        threads: 8
+        threads: 12
     trim_galore_se:
         arguments: "-q 20 --fastqc --fastqc_args '--outdir qc/fastqc --quiet'"
-        threads: 8
+        threads: 12
     picard_MarkDuplicates:
         arguments: "REMOVE_DUPLICATES=false ASSUME_SORTED=true CREATE_INDEX=true"
         threads: 6
@@ -47,7 +51,7 @@ rules:
     gatk_SplitIntervals:
         scatter-count: 25
         mode: BALANCING_WITHOUT_INTERVAL_SUBDIVISION_WITH_OVERFLOW
-        intervals: "/mnt/references/gatk/hg38/wgs_calling_regions.hg38.interval_list"
+        intervals: "/home/datasets_references/gatk/Hg38/wgs_calling_regions.hg38.interval_list"
         threads: 2
     gatk_BQSR_data_processing:
         known_sites:
@@ -63,9 +67,9 @@ rules:
         threads: 2
     gatk_GenomicsDBImport:
         db_suffix: "db_gatk"
-        threads: 20
+        threads: 6
     gatk_GenotypeGVCFs:
-        threads: 20
+        threads: 8
     gatk_VariantRecalibrator:
         threads: 20
     gatk_ApplyVQSR:
@@ -82,6 +86,10 @@ rules:
         threads: 6
     samtools_index:
         threads: 1
+    check_relationships:
+        threads: 8
+    freebayes_mtdna:
+        threads: 6
     manta:
         threads: 30
     mantaINV:
