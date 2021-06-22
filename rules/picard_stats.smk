@@ -44,3 +44,33 @@ rule picard_WGSMetrics:
        "O={output.metrics} "
        "R={params.genome} "
        "&> {log} "
+
+rule gatk_DepthOfCoverage:
+    input:
+        cram="reads/recalibrated/{sample}.dedup.recal.cram",
+        crai="reads/recalibrated/{sample}.dedup.recal.cram.crai"
+    output:
+        "reads/recalibrated/{sample}.sample_gene_summary"
+    params:
+        genome=resolve_single_filepath(*references_abs_path(), config.get("genome_fasta")),
+        cov_refseq=resolve_single_filepath(*references_abs_path(),config.get("depthofcov_refseq")),
+        cov_intervals=resolve_single_filepath(*references_abs_path(),config.get("depthofcov_intervals")),
+        prefix="reads/recalibrated/{sample}"
+    conda:
+        "../envs/gatk.yaml"
+    benchmark:
+        "benchmarks/gatk/DepthOfCoverage/{sample}.txt"
+    log:
+        "logs/gatk/DepthOfCoverage/{sample}.txt"
+    threads: 4
+    shell:
+        "gatk DepthOfCoverage "
+        "--omit-depth-output-at-each-base --omit-locus-table "
+        "-R {params.genome} "
+        "-O {params.prefix} "
+        "-I {input.cram} "
+        "-gene-list {params.cov_refseq} "
+        "--summary-coverage-threshold 10 --summary-coverage-threshold 30 --summary-coverage-threshold 50 "
+        "-L {params.cov_intervals} "
+        ">& {log} "
+
