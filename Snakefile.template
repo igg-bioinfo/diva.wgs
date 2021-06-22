@@ -6,8 +6,7 @@ min_version("5.10.0")
 ## User files ##
 samples = pd.read_table(config["samples"], index_col="sample")
 units = pd.read_table(config["units"], index_col=["unit"], dtype=str)
-reheader = pd.read_csv(config["reheader"],index_col="Client", dtype=str, sep="\t")
-reheader = reheader[reheader["LIMS"].isin(samples.index.values)]
+reheader = pd.read_csv(config["reheader"],index_col="Lab_ID", dtype=str, sep="\t")
 sets = pd.read_csv(config["sets"], index_col=["set"], dtype=str, sep="\t")
 
 ## Local rules ##
@@ -19,31 +18,33 @@ localrules: all, pre_rename_fastq_pe, post_rename_fastq_pe, pre_rename_fastq_se,
 ## Target files ##
 rule all:
     input:
-        "split/splitted",
-        "qc/multiqc.html",
+        # Interactive HTML QC report
+#        "qc/multiqc.html",
         # Final CRAM
-        expand("reads/recalibrated/{sample.sample}.dedup.recal.cram",
-              sample=samples.reset_index().itertuples()),
+#        expand("reads/recalibrated/{sample.sample}.dedup.recal.cram",
+#              sample=samples.reset_index().itertuples()),
+        # Coverage with GATK DepthOfCoverage
+#        expand("reads/recalibrated/{sample.sample}.sample_gene_summary", sample=samples.reset_index().itertuples()),
         # VCF before recalibration, for each interval
-        expand("variant_calling/all.{interval}.vcf.gz",
-                interval=[str(i).zfill(4) for i in
-                        range(0, int(config.get('rules').get
-                        ('gatk_SplitIntervals').get('scatter-count')))]),
+#        expand("variant_calling/all.{interval}.vcf.gz",
+#                interval=[str(i).zfill(4) for i in
+#                        range(0, int(config.get('rules').get
+#                        ('gatk_SplitIntervals').get('scatter-count')))]),
         # VCF before recalibration
-        "variant_calling/all.vcf.gz",
+#        "variant_calling/all.vcf.gz",
         # VCF after recalibration
-        "variant_calling/all.snp_recalibrated.indel_recalibrated.vcf.gz",
+#        "variant_calling/all.snp_recalibrated.indel_recalibrated.vcf.gz",
         # Manta
-        expand("variant_calling/sv/{set.set}/{set.set}.diploidSV.vcf.gz",set=sets.reset_index().itertuples()),
+#        expand("variant_calling/sv/{set.set}/{set.set}.diploidSV.vcf.gz",set=sets.reset_index().itertuples()),
         # MantaINV
-        expand("variant_calling/sv/{set.set}/{set.set}.diploidSV_INV.vcf.gz",set=sets.reset_index().itertuples()),
+#        expand("variant_calling/sv/{set.set}/{set.set}.diploidSV_INV.vcf.gz",set=sets.reset_index().itertuples()),
 
 ## Load rules ##
 include_prefix="rules"
 include:
     include_prefix + "/functions.py"
 include:
-    include_prefix + "/trimming.smk"
+    include_prefix + "/trimming.withCopy.smk"
 include:
     include_prefix + "/alignment.smk"
 include:
